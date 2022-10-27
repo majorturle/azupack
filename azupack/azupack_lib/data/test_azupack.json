@@ -1,0 +1,18 @@
+{
+    "packages": [
+        {
+            "organization": "https://dev.azure.com/LlamaCo",
+            "feed": "LlamaFeed",
+            "name": "ZooPackage",
+            "version": "1.*",
+            "path": "./download"
+        },
+        {
+            "organization": "https://dev.azure.com/TurtleCo",
+            "feed": "TurleFeed",
+            "name": "WaterPackage",
+            "version": "1.9.22",
+            "path": "./download"
+        }
+    ]
+}
