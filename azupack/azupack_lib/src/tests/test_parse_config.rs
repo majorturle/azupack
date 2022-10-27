@@ -1,4 +1,4 @@
-use crate::package_config::{parse_config, AzuPackConfig, Package};
+use crate::parse_config::{parse_config, AzuPackConfig, Package};
 
 #[test]
 fn config_parse_structure() {

@@ -1,1 +1,3 @@
-mod test_package_config;
+mod test_parse_config;
+mod test_azcli;
+mod test_login;

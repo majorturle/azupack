@@ -1,7 +1,7 @@
 use std::{fmt, fs, error::Error};
 use serde::{Deserialize};
 use serde_json;
-use error_stack::{IntoReport, Report, Result, ResultExt};
+use error_stack::{IntoReport, Result, ResultExt};
 
 #[derive(Debug)]
 pub struct ParseConfigError;
