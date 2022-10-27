@@ -35,7 +35,11 @@ class AuthHandler:
         if re.match(url_expr, organization) is None:
             raise ValueError(f"The organization '{organization}' is not an URL!")
 
-        # todo: further validate the values
+        # always add the '/' at the end of the organization
+        if not organization.endswith('/'):
+            organization += '/'
+
+        # TODO: further validate the values
 
         # if the feed is empty, leave it as is
         self.instances.append(

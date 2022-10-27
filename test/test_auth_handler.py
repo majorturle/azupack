@@ -15,4 +15,20 @@ class Test(unittest.TestCase):
     
     def test_auth_org_match(self):
         auth = AuthHandler()
-        auth.add_auth()
+        auth.add_auth(organization="https://dev.azure.com/myorg/", token="abcd1234")
+        auth.add_auth(organization="https://dev.azure.com/other-org/", token="abcd1234")
+
+        a = auth.get_auth(organization="https://dev.azure.com/myorg/", feed=None)
+        self.assertEqual(a.organization, "https://dev.azure.com/myorg/")
+        self.assertEqual(a.token, "abcd1234")
+        self.assertEqual(a.feed, None)
+
+    def test_auth_org_match_slash_tolerance(self):
+        auth = AuthHandler()
+        auth.add_auth(organization="https://dev.azure.com/myorg", token="abcd1234")
+        auth.add_auth(organization="https://dev.azure.com/other-org/", token="abcd1234")
+
+        a = auth.get_auth(organization="https://dev.azure.com/myorg/", feed=None)
+        self.assertEqual(a.organization, "https://dev.azure.com/myorg/")
+        self.assertEqual(a.token, "abcd1234")
+        self.assertEqual(a.feed, None)
