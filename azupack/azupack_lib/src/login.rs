@@ -1,5 +1,5 @@
 use std::{fmt, error::Error};
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{IntoReport, Result};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct LoginToken {
@@ -43,7 +43,7 @@ impl LoginProvider {
         self.tokens.push(token)
     }
 
-    pub fn get_token<S>(&self, organization: S) -> Result<Vec<&LoginToken>, LoginNotFoundError> where S: Into<String> {
+    pub fn get_tokens<S>(&self, organization: S) -> Result<Vec<&LoginToken>, LoginNotFoundError> where S: Into<String> {
         let mut org: String = organization.into();
         if org.chars().last().unwrap() != '/' {
             org.push('/');

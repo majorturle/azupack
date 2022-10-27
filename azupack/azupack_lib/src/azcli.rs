@@ -1,7 +1,9 @@
-use std::process::Command;
+use std::io::Write;
+use std::process::{Command, Stdio};
 use std::{fmt, error::Error};
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{IntoReport, Result, ResultExt, report};
 use regex::Regex;
+use crate::login::{LoginToken};
 
 #[derive(Debug)]
 pub struct AzCliComponent {
@@ -25,6 +27,19 @@ impl fmt::Display for AzCliError {
 }
 
 impl Error for AzCliError {}
+
+#[derive(Debug)]
+pub struct AzLoginError;
+
+impl fmt::Display for AzLoginError {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_str("Azure CLI: cannot login to DevOps cli.")
+    }
+}
+
+impl Error for AzLoginError {}
+
+/* --- functions ------------------------------------------------------------ */
 
 impl AzCli {
     pub fn new() -> Result<AzCli, AzCliError> {
@@ -57,5 +72,46 @@ impl AzCli {
         println!("{}", output);
 
         return Ok(cli);
+    }
+
+    pub fn login(&mut self, token: &LoginToken) -> Result<(), AzLoginError> {
+        // note: az is the executable and takes all the arguments as a single argument!
+        // the sub-arguments are forwarded to the subprograms
+        let mut child = Command::new("az")
+            .arg("devops").arg("login").arg("--org").arg(token.organization.as_str())
+            .stdin(Stdio::piped())
+            .stdout(Stdio::inherit())
+            .spawn()
+            .into_report()
+            .attach_printable_lazy(|| {
+                format!("Cannot spawn process 'az devops login'.")
+            }).change_context(AzLoginError)?;
+
+            let child_stdin = child.stdin.as_mut().unwrap();
+            child_stdin.write_all(token.token.as_bytes())
+                .into_report()
+                .change_context(AzLoginError)?;
+
+            // Close stdin to finish and avoid indefinite blocking
+            drop(child_stdin);
+            let output = child.wait_with_output()
+                .into_report().change_context(AzLoginError)?;
+
+            if let Some(exit_code) = output.status.code() {
+                if exit_code != 0 {
+                    return Err(report!(AzLoginError))
+                    .attach_printable_lazy(|| {
+                        format!("Invalid PAT for organization '{}'", token.organization)
+                    })
+                }
+            } else {
+                return Err(report!(AzLoginError))
+                    .attach_printable_lazy(|| {
+                        format!("Login process was killed for organization '{}'", token.organization)
+                    })
+            }
+
+            println!("Login successful!");
+            Ok(())
     }
 }
