@@ -1,0 +1,12 @@
+{
+    "schema": "1.0.0",
+    "packages": [
+        {
+            "organization": "<org-url>",
+            "feed": "<feed@view>",
+            "name": "<package-name>",
+            "version": "1.0.22",
+            "path": "<relative-path>"
+        }
+    ]
+}
