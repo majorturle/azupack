@@ -1,5 +1,7 @@
-use std::{fmt, error::Error};
+use std::{env, fmt, error::Error};
 use error_stack::{IntoReport, Result};
+use regex::Regex;
+use std::collections::HashMap;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct LoginToken {
@@ -20,6 +22,15 @@ impl LoginToken {
 
         LoginToken { organization: org, token: token.into() }
     }
+
+    pub fn is_valid(&self) -> bool {
+        // todo: make a regex match to check if it's an URL and a real token
+        if self.organization.len() > 0 && self.token.len() > 0 {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 
@@ -36,7 +47,40 @@ impl Error for LoginNotFoundError {}
 
 impl LoginProvider {
     pub fn new () -> LoginProvider {
-        LoginProvider { tokens: Vec::new() }
+        // fetch the tokens from the environment
+        let mut login_map: HashMap<i32, LoginToken> = HashMap::new();
+        for (key, value) in env::vars() {
+            // try to capture the organizations AZUPACK_LOGIN__0__ORG = ""
+            let re = Regex::new(r"AZUPACK_LOGIN__(\d+)__ORG").unwrap();
+            if let Some(caps) = re.captures(&key) {
+                let org_index = caps.get(1).map_or("", |m| m.as_str()).parse::<i32>().unwrap();
+                let org_name = value;
+                login_map.insert(org_index, LoginToken::new(org_name, String::new()));
+            } else {
+                // try to capture the tokens AZUPACK_LOGIN__0__TOKEN = ""
+                let re = Regex::new(r"AZUPACK_LOGIN__(\d+)__TOKEN").unwrap();
+                if let Some(caps) = re.captures(&key) {
+                    let token_index = caps.get(1).map_or("", |m| m.as_str()).parse::<i32>().unwrap();
+                    let token_value = value;
+
+                    // check if the organization is already in the dictionary
+                    if login_map.contains_key(&token_index) {
+                        if let Some(x) = login_map.get_mut(&token_index) {
+                            x.token = token_value;
+                        }
+                    }
+                }
+            }
+        }
+
+        let mut provider = LoginProvider { tokens: Vec::new() };
+        for (_, token) in login_map {
+            if token.is_valid() {
+                provider.add_token(token);
+            }
+        }
+
+        return provider;
     }
 
     pub fn add_token(&mut self, token: LoginToken) {
